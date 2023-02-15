@@ -1,0 +1,107 @@
+<?php
+
+/**
+ * @file
+ * Drupal module implementing New Relic.
+ */
+
+use Drupal\Component\Utility\Timer;
+use Drupal\views\ViewExecutable;
+use Drupal\Core\Routing\RouteMatchInterface;
+
+/**
+ * Implements hook_cron().
+ *
+ * This is used to set cron tasks to be not tracked by New Relic if so desired.
+ */
+function new_relic_rpm_cron() {
+  $cron_tracking = \Drupal::config('new_relic_rpm.settings')->get('track_cron');
+  \Drupal::service('new_relic_rpm.adapter')->setTransactionState($cron_tracking);
+}
+
+/**
+ * Implements hook_modules_installed().
+ */
+function new_relic_rpm_modules_installed($modules) {
+  new_relic_rpm_module_deploy($modules, 'install');
+}
+
+/**
+ * Implements hook_modules_uninstalled().
+ */
+function new_relic_rpm_modules_uninstalled($modules) {
+  new_relic_rpm_module_deploy($modules, 'uninstall');
+}
+
+/**
+ * Log module install/uninstall actions as a deploy call to New Relic.
+ */
+function new_relic_rpm_module_deploy($modules, $action) {
+  if (!\Drupal::config('new_relic_rpm.settings')->get('module_deployment')) {
+    return;
+  }
+
+  $description = t(':action :modules', [
+    ':action' => ($action == 'install') ? t('Installed')->render() : t('Uninstalled')->render(),
+    ':modules' => implode(', ', $modules),
+  ]);
+
+  /** @var \Drupal\new_relic_rpm\Client\NewRelicApiClient $client */
+  $client = \Drupal::service('new_relic_rpm.client');
+  $client->createDeployment('module_change', $description->render());
+}
+
+/**
+ * The unique name for the timer based on view details.
+ *
+ * @param \Drupal\views\ViewExecutable $view
+ *   The view to create the timer for.
+ *
+ * @return string
+ *   The timer name.
+ */
+function _new_relic_rpm_views_timer_name(ViewExecutable $view) {
+  return 'new_relic_rpm:' . $view->id() . ':' . $view->current_display;
+}
+
+/**
+ * Implements hook_views_pre_build().
+ */
+function new_relic_rpm_views_pre_build(ViewExecutable $view) {
+  if (\Drupal::config('new_relic_rpm.settings')->get('views_log_slow')) {
+    Timer::start(_new_relic_rpm_views_timer_name($view));
+  }
+}
+
+/**
+ * Implements hook_views_post_render().
+ */
+function new_relic_rpm_views_post_render(ViewExecutable $view) {
+  if (!\Drupal::config('new_relic_rpm.settings')->get('views_log_slow')) {
+    return;
+  }
+
+  $execution_timer = Timer::stop(_new_relic_rpm_views_timer_name($view));
+  if ($execution_timer['time'] > \Drupal::config('new_relic_rpm.settings')->get('views_log_threshold')) {
+    \Drupal::service('new_relic_rpm.adapter')->recordCustomEvent('SlowView', [
+      'views_id' => $view->id(),
+      'display_id' => $view->current_display,
+      'execution_time' => $execution_timer['time'],
+      'arguments' => implode('/', $view->args),
+    ]);
+  }
+}
+
+/**
+ * Implements hook_help().
+ */
+function new_relic_rpm_help($route_name, RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    case 'help.page.new_relic_rpm':
+      return t("<p>This module's purpose is to enhance New Relic integration with Drupal and bring visibility of your website's performance into Drupal. It also allows you to perform some tasks pertaining to New Relic's monitoring of your site from within the Drupal website.</p>
+      <p>See the <a href=\":project_page\">project page on Drupal.org</a> for more details.</p>",
+        [
+          ':project_page' => 'https://www.drupal.org/project/new_relic_rpm',
+        ]);
+  }
+}

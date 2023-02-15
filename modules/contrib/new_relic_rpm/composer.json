@@ -1,0 +1,20 @@
+{
+  "name": "drupal/new_relic_rpm",
+  "description": "Provides additional newrelic integration with Drupal.",
+  "type": "drupal-module",
+  "homepage": "https://drupal.org/project/new_relic_rpm",
+  "support": {
+    "issues": "https://drupal.org/project/issues/new_relic_rpm",
+    "source": "https://git.drupalcode.org/project/new_relic_rpm"
+  },
+  "require": {
+      "php": ">=8.0"
+  },
+  "extra": {
+    "drush": {
+      "services": {
+        "drush.services.yml": "^9 || ^10"
+      }
+    }
+  }
+}

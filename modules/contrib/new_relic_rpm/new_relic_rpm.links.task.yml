@@ -1,0 +1,9 @@
+new_relic_rpm.settings:
+  route_name: new_relic_rpm.settings
+  title: 'Settings'
+  base_route: new_relic_rpm.settings
+
+new_relic_rpm.deploy:
+  route_name: new_relic_rpm.deploy
+  title: 'Deployment'
+  base_route: new_relic_rpm.settings

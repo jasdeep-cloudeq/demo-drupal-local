@@ -1,0 +1,15 @@
+new_relic_rpm.settings:
+  path: '/admin/config/development/new-relic'
+  defaults:
+    _title: 'New Relic'
+    _form: '\Drupal\new_relic_rpm\Form\NewRelicRpmSettings'
+  requirements:
+    _permission: 'administer new relic rpm'
+
+new_relic_rpm.deploy:
+  path: '/admin/config/development/new-relic/deploy'
+  defaults:
+    _title: 'New Relic Deployment'
+    _form: '\Drupal\new_relic_rpm\Form\NewRelicRpmDeploy'
+  requirements:
+    _permission: 'create new relic rpm deployments'

@@ -1,0 +1,4 @@
+administer new relic rpm:
+  title: 'Administer new relic'
+create new relic rpm deployments:
+  title: 'Create new relic deployments'

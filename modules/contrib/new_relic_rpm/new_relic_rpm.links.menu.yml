@@ -1,0 +1,5 @@
+new_relic_rpm.settings:
+  route_name: new_relic_rpm.settings
+  title: 'New Relic'
+  description: 'Alter settings and mange your New Relic integration.'
+  parent: system.admin_config_development
